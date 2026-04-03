@@ -1,0 +1,206 @@
+-- States
+local active = false
+local isActivating = false
+
+-- Original Logic Hook
+raknet.add_send_hook(function(packet)
+    if active and packet.PacketId == 0x1B then
+        local data = packet.AsBuffer
+        if data then
+            buffer.writeu32(data, 1, 0xFFFFFFFF)
+            packet:SetData(data)
+        end
+    end
+end)
+
+-- UI Setup
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "DesyncRevivedUI_Final"
+ScreenGui.Parent = game:GetService("CoreGui")
+ScreenGui.ResetOnSpawn = false
+
+-- Main Background Frame
+local MainFrame = Instance.new("Frame")
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(12, 14, 18)
+MainFrame.BackgroundTransparency = 0.1
+MainFrame.Position = UDim2.new(0.5, -165, 0.35, -160)
+MainFrame.Size = UDim2.new(0, 330, 0, 320)
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 20)
+MainCorner.Parent = MainFrame
+
+-- Close Button (X)
+local CloseButton = Instance.new("TextButton")
+CloseButton.Parent = MainFrame
+CloseButton.BackgroundColor3 = Color3.fromRGB(255, 65, 65)
+CloseButton.Position = UDim2.new(1, -32, 0, 12)
+CloseButton.Size = UDim2.new(0, 20, 0, 20)
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 12
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(1, 0)
+CloseCorner.Parent = CloseButton
+
+-- Wrench Icon
+local Wrench = Instance.new("TextLabel")
+Wrench.Parent = MainFrame
+Wrench.BackgroundTransparency = 1
+Wrench.Position = UDim2.new(0.5, -35, 0, 10)
+Wrench.Size = UDim2.new(0, 70, 0, 70)
+Wrench.Text = "🔧"
+Wrench.TextSize = 55
+
+-- Title
+local Title = Instance.new("TextLabel")
+Title.Parent = MainFrame
+Title.BackgroundTransparency = 1
+Title.Position = UDim2.new(0, 0, 0, 75)
+Title.Size = UDim2.new(1, 0, 0, 35)
+Title.Font = Enum.Font.GothamBold
+Title.Text = "Desync REVIVED"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 26
+
+-- Subtitle (Instructions)
+local Subtitle = Instance.new("TextLabel")
+Subtitle.Parent = MainFrame
+Subtitle.BackgroundTransparency = 1
+Subtitle.Position = UDim2.new(0.05, 0, 0, 110)
+Subtitle.Size = UDim2.new(0.9, 0, 0, 40)
+Subtitle.Font = Enum.Font.Gotham
+Subtitle.Text = "After you toggle desync equip the Magic Carpet and use it for a second then get off"
+Subtitle.TextColor3 = Color3.fromRGB(160, 160, 160)
+Subtitle.TextSize = 12
+Subtitle.TextWrapped = true
+Subtitle.TextTransparency = 0.2
+
+-- 1. ACTIVATE BUTTON
+local ActivateButton = Instance.new("TextButton")
+ActivateButton.Parent = MainFrame
+ActivateButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+ActivateButton.BackgroundTransparency = 0.94
+ActivateButton.Position = UDim2.new(0.2, 0, 0, 165)
+ActivateButton.Size = UDim2.new(0.6, 0, 0, 40)
+ActivateButton.Font = Enum.Font.GothamBold
+ActivateButton.Text = "Activate"
+ActivateButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ActivateButton.TextSize = 15
+ActivateButton.ClipsDescendants = true
+ActivateButton.ZIndex = 5
+
+local ACorner = Instance.new("UICorner")
+ACorner.CornerRadius = UDim.new(0, 10)
+ACorner.Parent = ActivateButton
+
+local AStroke = Instance.new("UIStroke")
+AStroke.Color = Color3.fromRGB(255, 255, 255)
+AStroke.Thickness = 1.2
+AStroke.Transparency = 0.6
+AStroke.Parent = ActivateButton
+
+-- THE WHITE LOADING BAR
+local LoadingBar = Instance.new("Frame")
+LoadingBar.Name = "LoadingBar"
+LoadingBar.Parent = ActivateButton
+LoadingBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+LoadingBar.BackgroundTransparency = 0.5
+LoadingBar.BorderSizePixel = 0
+LoadingBar.Size = UDim2.new(0, 0, 1, 0)
+LoadingBar.ZIndex = 4
+
+-- 2. DESYNC TOGGLE BUTTON
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Parent = MainFrame
+ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.BackgroundTransparency = 0.92
+ToggleButton.Position = UDim2.new(0.1, 0, 0, 225)
+ToggleButton.Size = UDim2.new(0.8, 0, 0, 50)
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.Text = "Desync Off"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.TextSize = 18
+
+local TCorner = Instance.new("UICorner")
+TCorner.CornerRadius = UDim.new(0, 12)
+TCorner.Parent = ToggleButton
+
+local Indicator = Instance.new("Frame")
+Indicator.Parent = ToggleButton
+Indicator.BackgroundColor3 = Color3.fromRGB(255, 55, 55)
+Indicator.Position = UDim2.new(0, 18, 0.5, -8)
+Indicator.Size = UDim2.new(0, 16, 0, 16)
+
+local ICorner = Instance.new("UICorner")
+ICorner.CornerRadius = UDim.new(1, 0)
+ICorner.Parent = Indicator
+
+-- Loading Logic
+ActivateButton.MouseButton1Click:Connect(function()
+    if isActivating then return end
+    isActivating = true
+    local startTime = tick()
+    local duration = 5
+    
+    task.spawn(function()
+        local dots = ""
+        while isActivating do
+            dots = dots .. "."
+            if #dots > 3 then dots = "" end
+            local elapsed = tick() - startTime
+            
+            -- Stage Text Logic
+            local baseText = "Initializing"
+            if elapsed >= 45 then baseText = "Finishing up"
+            elseif elapsed >= 30 then baseText = "Injecting"
+            elseif elapsed >= 20 then baseText = "Downloading raknet files"
+            elseif elapsed >= 8 then baseText = "Analyzing game files"
+            end
+            
+            -- Final State check within loop
+            if elapsed >= duration then
+                ActivateButton.Text = "Done!"
+                break
+            else
+                ActivateButton.Text = baseText .. dots
+            end
+            
+            task.wait(0.5)
+        end
+    end)
+    
+    LoadingBar:TweenSize(UDim2.new(1, 0, 1, 0), "Linear", "In", duration)
+    
+    task.wait(duration)
+    isActivating = false
+    LoadingBar.Visible = false
+    ActivateButton.BackgroundColor3 = Color3.fromRGB(55, 255, 100)
+    ActivateButton.BackgroundTransparency = 0.7
+end)
+
+-- Toggle Logic
+ToggleButton.MouseButton1Click:Connect(function()
+    active = not active
+    Indicator.BackgroundColor3 = active and Color3.fromRGB(55, 255, 100) or Color3.fromRGB(255, 55, 55)
+    ToggleButton.Text = active and "Desync On" or "Desync Off"
+end)
+
+-- Footer
+local Footer = Instance.new("TextLabel")
+Footer.Parent = MainFrame
+Footer.BackgroundTransparency = 1
+Footer.Position = UDim2.new(0, 0, 1, -28)
+Footer.Size = UDim2.new(1, 0, 0, 20)
+Footer.Font = Enum.Font.Gotham
+Footer.Text = "UPDATED | Version 1.01"
+Footer.TextColor3 = Color3.fromRGB(255, 255, 255)
+Footer.TextSize = 12
+Footer.TextTransparency = 0.6
+
+CloseButton.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
